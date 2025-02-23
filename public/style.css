@@ -1,0 +1,118 @@
+/* general */
+
+* {
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1a1d25;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* nav bar */ 
+
+#nav-container {
+    margin: 0 5%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    background-color: #252837;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#links {
+    margin-left: auto;
+    display: flex;
+}
+
+#home-icon {
+    display: flex;
+    align-items: center;
+}
+
+#wow-icon {
+    scale: 0.8;
+}
+
+#home-icon a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: white;
+}
+
+#home-icon h1 {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-left: 0.25rem;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+nav a:hover {
+    color: #62a0ff; /* Light blue on hover */
+    text-decoration: none;
+}
+
+/* search bar */
+
+#search-form{
+    margin: 2rem 0;
+    display: flex;
+    justify-content: center;
+}
+
+#search-input {
+    background-color: #252837;
+    border: 0.1rem solid white;
+    border-radius: 0.25rem;
+    color: white;
+    padding: 0.5rem;
+}
+
+#search-btn {
+    font-family: inherit;
+    margin-left: 1rem;
+    border-radius: 0.25rem;
+    color: white;
+    background-color: #4f8eec;
+    border: none;
+}
+
+#search-btn:hover {
+    background-color: #3362a8;
+}
+
+#search-btn:active {
+    background-color: #122a4e;
+}
+
+/* content */ 
+
+.content-wrapper {
+    margin-top: 3rem;
+}
+
+#content {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
