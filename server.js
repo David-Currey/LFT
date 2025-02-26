@@ -122,11 +122,7 @@ app.get('/api/profile', async (req, res) => {
 								}
 							)
 							const assets = mediaResponse.data.assets || []
-							const avatarAsset =
-								assets.find((asset) => asset.key === 'avatar') ||
-								assets.find((asset) => asset.key === 'render') ||
-								assets.find((asset) => asset.key === 'main') ||
-								assets[0]
+							const avatarAsset = assets.find((asset) => asset.key === 'avatar')
 
 							char.media = {
 								avatar_url: avatarAsset ? avatarAsset.value : '',
