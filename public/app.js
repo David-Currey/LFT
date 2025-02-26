@@ -43,7 +43,7 @@ function loadLoginPage(content) {
 	// Clear the content
 	content.innerHTML = ''
 
-	// Check if user is logged in by fetching profile
+	// Check if the user is logged in by fetching profile
 	fetch('/api/profile')
 		.then((response) => {
 			if (!response.ok) throw new Error('Not logged in')
@@ -56,37 +56,33 @@ function loadLoginPage(content) {
 				return
 			}
 
-			// Create a dropdown list with all characters
-			const characterListHTML = characters
-				.map((char, index) => {
-					return `<option value="${index}">${char.name} - Level ${char.level} (${char.realm.name})</option>`
+			// Create cards for each character
+			const characterCardsHTML = characters
+				.map((char) => {
+					const mythicScore = char.mythic_plus_score || 'N/A'
+					const characterMedia =
+						char.media.avatar_url || 'default-character.png'
+					return `
+                    <div class="character-card">
+                        <img src="${characterMedia}" class="character-avatar"/>
+                        <div class="character-info">
+                            <h3>${char.name}</h3>
+                            <p>Level: ${char.level}</p>
+                            <p>Mythic+ Score: ${mythicScore}</p>
+                        </div>
+                    </div>
+                    `
 				})
 				.join('')
 
-			// Show the character selection dropdown
+			// Show the character cards
 			content.innerHTML = `
                 <h2>Welcome, select your character:</h2>
-                <select id="character-select">
-                    ${characterListHTML}
-                </select>
-                <div id="character-details"></div>
+                <div class="character-cards-container">
+                    ${characterCardsHTML}
+                </div>
                 <button id="logout-btn">Logout</button>
             `
-
-			// Event listener to display details of the selected character
-			const selectElement = document.getElementById('character-select')
-			const characterDetails = document.getElementById('character-details')
-			selectElement.addEventListener('change', (event) => {
-				const selectedCharacter = characters[event.target.value]
-				characterDetails.innerHTML = `
-                    <h3>${selectedCharacter.name}</h3>
-                    <p>Level: ${selectedCharacter.level}</p>
-                    <p>Realm: ${selectedCharacter.realm.name}</p>
-                `
-			})
-
-			// Trigger the details of the first character by default
-			selectElement.dispatchEvent(new Event('change'))
 
 			// Add logout event listener
 			document.getElementById('logout-btn').addEventListener('click', () => {

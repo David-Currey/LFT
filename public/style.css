@@ -116,3 +116,47 @@ nav a:hover {
     flex-direction: column;
     align-items: center;
 }
+
+/* profile page /*
+
+    /* character cards container */
+    .character-cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    /* individual character card */
+    .character-card {
+        background-color: #252837;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        width: 200px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* character avatar image */
+    .character-avatar {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+
+    /* character info */
+    .character-info {
+        color: white;
+        margin-top: 1rem;
+    }
+
+    .character-info h3 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .character-info p {
+        font-size: 1rem;
+    }
