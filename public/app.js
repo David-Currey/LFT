@@ -23,7 +23,7 @@ function loadHomePage(content) {
 	content.innerHTML = `
 	<form id="search-form">
         <input id="search-input" type="text" placeholder="Search groups">
-        <button id="search-btn" type="submit">Search</button>
+        <button class="drk-btn" type="submit">Search</button>
     </form>
 	<div class="content-wrapper">
 		<h1>Welcome to the Home Page!</h1>
@@ -62,16 +62,24 @@ function loadLoginPage(content) {
 					const mythicScore = char.mythic_plus_score || 'N/A'
 					const characterMedia =
 						char.media.avatar_url || 'default-character.png'
+					const classColor = char.classColor || '#FFFFFF'
+
 					return `
-                    <div class="character-card">
-                        <img src="${characterMedia}" class="character-avatar"/>
-                        <div class="character-info">
-                            <h3>${char.name}</h3>
-                            <p>Level: ${char.level}</p>
-                            <p>Mythic+ Score: ${mythicScore}</p>
-                        </div>
-                    </div>
-                    `
+				<div class="character-card">
+				  <img src="${characterMedia}" class="character-avatar"/>
+				  <div class="character-info">
+					<h3>${char.name}</h3>
+					<p>Level: ${char.level}</p>
+					<p>
+					  Class:
+					  <span style="color: ${classColor};">
+						${char.class || 'unknown'}
+					  </span>
+					</p>
+					<p>Mythic+ Score: ${mythicScore}</p>
+				  </div>
+				</div>
+			  `
 				})
 				.join('')
 
@@ -81,7 +89,7 @@ function loadLoginPage(content) {
                 <div class="character-cards-container">
                     ${characterCardsHTML}
                 </div>
-                <button id="logout-btn">Logout</button>
+                <button class="drk-btn" id="logout-btn">Logout</button>
             `
 
 			// Add logout event listener
@@ -98,7 +106,7 @@ function loadLoginPage(content) {
                 <h1>Login</h1>
                 <p>Log in to show your character information.</p>
                 <a href="/auth/login">
-                    <button id="login-btn">Login with Battle.net</button>
+                    <button class="drk-btn" id="login-btn">Login with Battle.net</button>
                 </a>
             `
 		})
