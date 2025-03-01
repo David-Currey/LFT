@@ -108,7 +108,7 @@ app.get('/api/profile', async (req, res) => {
 			Warlock: '#9482C9',
 			Monk: '#00FF96',
 			Druid: '#FF7D0A',
-			DemonHunter: '#A330C9',
+			'Demon Hunter': '#A330C9',
 		}
 
 		// Process each WoW account
