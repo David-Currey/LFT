@@ -57,7 +57,7 @@ function loadHomePage(content) {
 				leaderSelect.innerHTML = characters
 					.map(
 						(char) =>
-							`<option value="${char.name}" style="color: ${char.classColor};">${char.name}</option>`
+							`<option value="${char.name}" style="color: ${char.classColor}">${char.name} - ${char.realm.name}</option>`
 					)
 					.join('')
 			} catch (err) {
@@ -124,7 +124,7 @@ function loadLoginPage(content) {
 				<div class="character-card">
 				  <img src="${characterMedia}" class="character-avatar"/>
 				  <div class="character-info">
-					<h3>${char.name}</h3>
+					<h3>${char.name} - ${char.realm.name}</h3>
 					<p>Level: ${char.level}</p>
 					<p>
 					  Class:

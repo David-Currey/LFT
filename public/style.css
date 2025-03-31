@@ -163,7 +163,7 @@ nav a:hover {
     background-color: #252837;
     border-radius: 0.5rem;        
     padding: 1rem;
-    width: 200px;
+    width: 220px;
     text-align: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -182,7 +182,7 @@ nav a:hover {
 }
 
 .character-info h3 {
-    font-size: 1.2rem;
+    font-size: 1rem;
     margin-bottom: 0.5rem;
 }
 
