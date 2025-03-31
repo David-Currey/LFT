@@ -16,6 +16,7 @@ const CLIENT_ID = process.env.BLIZZARD_CLIENT_ID
 const CLIENT_SECRET = process.env.BLIZZARD_CLIENT_SECRET
 const REDIRECT_URI = 'https:// blizz-webapp-d0bf2.web.app/callback'
 
+// Session-like storage (for dev only, not recommended for production without external session store)
 const sessionStore = new Map()
 
 // AUTH ROUTES
