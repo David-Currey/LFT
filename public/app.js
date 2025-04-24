@@ -90,7 +90,7 @@ function loadAboutPage(content) {
 	content.innerHTML = `
 	<div class="content-wrapper">
 		<h1>About Us</h1>
-		<p>Learn more about our website and mission.</p>
+		<p>I hate boomkins (:</p>
 	</div>
 	`
 }
@@ -99,8 +99,10 @@ function loadLoginPage(content) {
 	// Clear the content
 	content.innerHTML = ''
 
-	// Check if the user is logged in by fetching profile
-	fetch('/api/profile')
+	// Include credentials to send the secure cookie
+	fetch('/api/profile', {
+		credentials: 'include',
+	})
 		.then((response) => {
 			if (!response.ok) throw new Error('Not logged in')
 			return response.json()
@@ -121,21 +123,21 @@ function loadLoginPage(content) {
 					const classColor = char.classColor || '#FFFFFF'
 
 					return `
-				<div class="character-card">
-				  <img src="${characterMedia}" class="character-avatar"/>
-				  <div class="character-info">
-					<h3>${char.name} - ${char.realm.name}</h3>
-					<p>Level: ${char.level}</p>
-					<p>
-					  Class:
-					  <span style="color: ${classColor};">
-						${char.class || 'unknown'}
-					  </span>
-					</p>
-					<p>Mythic+ Score: ${mythicScore}</p>
-				  </div>
-				</div>
-			  `
+					<div class="character-card">
+					  <img src="${characterMedia}" class="character-avatar"/>
+					  <div class="character-info">
+						<h3>${char.name} - ${char.realm.name}</h3>
+						<p>Level: ${char.level}</p>
+						<p>
+						  Class:
+						  <span style="color: ${classColor};">
+							${char.class || 'unknown'}
+						  </span>
+						</p>
+						<p>Mythic+ Score: ${mythicScore}</p>
+					  </div>
+					</div>
+				  `
 				})
 				.join('')
 
@@ -164,18 +166,25 @@ function loadLoginPage(content) {
 				<div class="content-wrapper">
 					<h1>Login</h1>
 					<p>Log in to show your character information.</p>
-					<a href="/auth/login">
-						<button class="drk-btn" id="login-btn">Login with Battle.net</button>
-					</a>
+					<button class="drk-btn" id="login-btn">Login with Battle.net</button>
 				</div>
             `
+			document.getElementById('login-btn').addEventListener('click', () => {
+				window.location.href = '/auth/login'
+			})
 		})
 }
 
-// Load content when the page loads
-window.addEventListener('load', () => {
-	loadContent()
-})
-
-// Detect URL hash change and load the corresponding page
+// Load content when the page loads or hash changes
 window.addEventListener('hashchange', loadContent)
+
+// Ensure content loads if we land directly on a hash route like #/login
+if (window.location.hash && document.readyState === 'complete') {
+	loadContent()
+} else {
+	window.addEventListener('DOMContentLoaded', () => {
+		if (window.location.hash) {
+			loadContent()
+		}
+	})
+}

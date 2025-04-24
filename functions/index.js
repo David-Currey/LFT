@@ -1,37 +1,49 @@
-const functions = require('firebase-functions')
+/*
+using:
+---------
+express
+firebase cloud functions v2
+secure blizzard authorization 
+defineSecrect
+HttpOnly cookie
+*/
+
+// Google Cloud Function-based Express server for Blizzard OAuth
 const express = require('express')
 const axios = require('axios')
 const crypto = require('crypto')
+const cookieParser = require('cookie-parser')
+const { onRequest } = require('firebase-functions/v2/https')
+const { defineSecret } = require('firebase-functions/params')
 const admin = require('firebase-admin')
-
-const app = express()
 
 admin.initializeApp()
 const db = admin.firestore()
 
+const BLIZZARD_CLIENT_ID = defineSecret('BLIZZARD_CLIENT_ID')
+const BLIZZARD_CLIENT_SECRET = defineSecret('BLIZZARD_CLIENT_SECRET')
+const REDIRECT_URI = 'https://blizz-webapp-d0bf2.web.app/callback'
+
+const app = express()
 app.use(express.json())
+app.use(cookieParser())
 
-// Blizzard OAuth credentials from environment config
-const CLIENT_ID = process.env.BLIZZARD_CLIENT_ID
-const CLIENT_SECRET = process.env.BLIZZARD_CLIENT_SECRET
-const REDIRECT_URI = 'https:// blizz-webapp-d0bf2.web.app/callback'
-
-// Session-like storage (for dev only, not recommended for production without external session store)
-const sessionStore = new Map()
-
-// AUTH ROUTES
+// BLIZZARD LOGIN REDIRECT
 app.get('/auth/login', (req, res) => {
 	const state = crypto.randomBytes(16).toString('hex')
-	sessionStore.set(state, {})
-
-	const authUrl = `https://oauth.battle.net/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=openid wow.profile&state=${state}`
-	res.redirect(authUrl)
+	const authUrl = new URL('https://oauth.battle.net/authorize')
+	authUrl.searchParams.set('client_id', BLIZZARD_CLIENT_ID.value())
+	authUrl.searchParams.set('redirect_uri', REDIRECT_URI)
+	authUrl.searchParams.set('response_type', 'code')
+	authUrl.searchParams.set('scope', 'openid wow.profile')
+	authUrl.searchParams.set('state', state)
+	res.redirect(authUrl.toString())
 })
 
+// BLIZZARD CALLBACK (fetches userinfo)
 app.get('/callback', async (req, res) => {
 	const { code, state } = req.query
-
-	if (!code || !state || !sessionStore.has(state)) {
+	if (!code || !state) {
 		return res.status(400).send('Invalid state parameter')
 	}
 
@@ -39,8 +51,8 @@ app.get('/callback', async (req, res) => {
 		const tokenResponse = await axios.post(
 			'https://oauth.battle.net/token',
 			new URLSearchParams({
-				client_id: CLIENT_ID,
-				client_secret: CLIENT_SECRET,
+				client_id: BLIZZARD_CLIENT_ID.value(),
+				client_secret: BLIZZARD_CLIENT_SECRET.value(),
 				code,
 				grant_type: 'authorization_code',
 				redirect_uri: REDIRECT_URI,
@@ -50,7 +62,6 @@ app.get('/callback', async (req, res) => {
 
 		const access_token = tokenResponse.data.access_token
 
-		// Get Blizzard user info
 		const userInfo = await axios.get(
 			'https://oauth.battle.net/oauth/userinfo',
 			{
@@ -58,23 +69,26 @@ app.get('/callback', async (req, res) => {
 			}
 		)
 
-		const blizzardUserId = userInfo.data.sub
-		const customToken = await admin
-			.auth()
-			.createCustomToken(`blizz_${blizzardUserId}`)
+		console.log('Blizzard User:', userInfo.data)
 
-		res.redirect(`/#/login?token=${customToken}`)
+		res.cookie('blizz_token', access_token, {
+			httpOnly: true,
+			secure: true,
+			sameSite: 'None',
+			maxAge: 60 * 60 * 1000,
+		})
+
+		res.redirect('/#login')
 	} catch (error) {
-		console.error(error.response ? error.response.data : error.message)
+		console.error('AUTH ERROR:', error.response?.data || error.message)
 		res.status(500).send('Authentication failed')
 	}
 })
 
+// PROFILE FETCH ROUTE
 app.get('/api/profile', async (req, res) => {
-	const authHeader = req.headers.authorization
-	if (!authHeader) return res.status(401).send('Unauthorized')
-
-	const access_token = authHeader.replace('Bearer ', '')
+	const access_token = req.cookies.blizz_token
+	if (!access_token) return res.status(401).send('Unauthorized')
 
 	try {
 		const profileResponse = await axios.get(
@@ -125,7 +139,7 @@ app.get('/api/profile', async (req, res) => {
 								}
 							)
 							const avatar = mediaRes.data.assets.find(
-								(asset) => asset.key === 'avatar'
+								(a) => a.key === 'avatar'
 							)?.value
 							char.media = { avatar_url: avatar || '' }
 						} catch (e) {
@@ -179,7 +193,13 @@ app.get('/api/profile', async (req, res) => {
 	}
 })
 
-// Create Group
+// LOGOUT
+app.get('/auth/logout', (req, res) => {
+	res.clearCookie('blizz_token')
+	res.redirect('/')
+})
+
+// CREATE GROUP
 app.post('/api/groups', async (req, res) => {
 	const { title, description, time, leader, role, owner } = req.body
 	if (!title || !time || !leader || !owner) {
@@ -203,4 +223,7 @@ app.post('/api/groups', async (req, res) => {
 	}
 })
 
-exports.app = functions.https.onRequest(app)
+exports.app = onRequest(
+	{ secrets: [BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET] },
+	app
+)

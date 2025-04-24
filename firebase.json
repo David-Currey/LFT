@@ -20,22 +20,10 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      {
-        "source": "/api/**",
-        "function": "app"
-      },
-      {
-        "source": "/auth/**",
-        "function": "app"
-      },
-      {
-        "source": "/callback",
-        "function": "app"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
+  {
+    "source": "**",
+    "function": "app"
+  }
+]
   }
 }
