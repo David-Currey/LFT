@@ -101,8 +101,12 @@ app.get('/api/profile', async (req, res) => {
 
 		const profileData = profileResponse.data
 		const wowAccounts = profileData.wow_accounts || []
-		const MAX_LEVEL = 80
 
+		if (!wowAccounts.length) {
+			return res.json(profileData)
+		}
+
+		const MAX_LEVEL = 80
 		const classColors = {
 			Warrior: '#C79C6E',
 			Paladin: '#F58CBA',
@@ -120,7 +124,10 @@ app.get('/api/profile', async (req, res) => {
 
 		const enhancedWowAccounts = await Promise.all(
 			wowAccounts.map(async (account) => {
-				if (!account.characters?.length) return account
+				if (!account.characters || !account.characters.length) {
+					return account
+				}
+
 				account.characters = account.characters.filter(
 					(char) => char.level === MAX_LEVEL
 				)
@@ -130,6 +137,7 @@ app.get('/api/profile', async (req, res) => {
 						const realmSlug = char.realm.slug
 						const characterName = encodeURIComponent(char.name.toLowerCase())
 
+						// Fetch Character Media
 						try {
 							const mediaRes = await axios.get(
 								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}/character-media`,
@@ -138,14 +146,18 @@ app.get('/api/profile', async (req, res) => {
 									params: { namespace: 'profile-us', locale: 'en_US' },
 								}
 							)
-							const avatar = mediaRes.data.assets.find(
-								(a) => a.key === 'avatar'
-							)?.value
-							char.media = { avatar_url: avatar || '' }
+							const assets = mediaRes.data.assets || []
+							const avatarAsset =
+								assets.find((a) => a.key === 'avatar') ||
+								assets.find((a) => a.key === 'render') ||
+								assets.find((a) => a.key === 'main') ||
+								assets[0]
+							char.media = { avatar_url: avatarAsset ? avatarAsset.value : '' }
 						} catch (e) {
 							char.media = { avatar_url: '' }
 						}
 
+						// Fetch Mythic+ Score
 						try {
 							const mythicRes = await axios.get(
 								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}/mythic-keystone-profile`,
@@ -160,6 +172,7 @@ app.get('/api/profile', async (req, res) => {
 							char.mythic_plus_score = 'N/A'
 						}
 
+						// Fetch Summary Info
 						try {
 							const summaryRes = await axios.get(
 								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}`,

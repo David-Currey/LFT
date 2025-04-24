@@ -18,7 +18,6 @@ function loadContent() {
 	}
 }
 
-// Functions to load each page's content (content is loaded dynamically)
 function loadHomePage(content) {
 	content.innerHTML = `
 	<div id="create-search-container">
@@ -44,15 +43,14 @@ function loadHomePage(content) {
 			groupModal.style.display = 'flex'
 
 			try {
-				// Fetch character data
-				const res = await fetch('/api/profile')
+				const res = await fetch('/api/profile', {
+					credentials: 'include',
+				})
 				if (!res.ok) {
 					throw new Error('Not logged in')
 				}
 				const data = await res.json()
 				const characters = data.wow_accounts[0].characters
-
-				// Populate the dropdown
 				const leaderSelect = document.getElementById('create-group-leader')
 				leaderSelect.innerHTML = characters
 					.map(
@@ -62,14 +60,12 @@ function loadHomePage(content) {
 					.join('')
 			} catch (err) {
 				console.error('Failed to fetch character data:', err)
-				// Update the modal content with a message asking the user to log in
 				groupModal.innerHTML = `
 				<div class="modal-content">
 				  <span class="close-btn" id="close-group-create-btn">&times;</span>
 				  <p style="text-align: center; font-size: 1.2rem; margin-top: 20px;">Please log in to create a group</p>
 				</div>
 			  `
-				// Reattach the close listener on the new close button
 				document
 					.getElementById('close-group-create-btn')
 					.addEventListener('click', () => {
@@ -96,10 +92,8 @@ function loadAboutPage(content) {
 }
 
 function loadLoginPage(content) {
-	// Clear the content
 	content.innerHTML = ''
 
-	// Include credentials to send the secure cookie
 	fetch('/api/profile', {
 		credentials: 'include',
 	})
@@ -114,7 +108,6 @@ function loadLoginPage(content) {
 				return
 			}
 
-			// Create cards for each character
 			const characterCardsHTML = characters
 				.map((char) => {
 					const mythicScore = char.mythic_plus_score || 'N/A'
@@ -141,7 +134,6 @@ function loadLoginPage(content) {
 				})
 				.join('')
 
-			// Show the character cards
 			content.innerHTML = `
 				<div class="content-wrapper">
 					<h2>Welcome, select your character:</h2>
@@ -150,41 +142,30 @@ function loadLoginPage(content) {
 					</div>
 					<button class="drk-btn" id="logout-btn">Logout</button>
 				</div>
-            `
+			`
 
-			// Add logout event listener
 			document.getElementById('logout-btn').addEventListener('click', () => {
 				window.location.href = '/auth/logout'
 			})
 
-			// Change the login button to 'Profile'
 			document.getElementById('login-nav').innerHTML = 'Profile'
 		})
 		.catch(() => {
-			// If not logged in, show the login section
 			content.innerHTML = `
 				<div class="content-wrapper">
 					<h1>Login</h1>
 					<p>Log in to show your character information.</p>
 					<button class="drk-btn" id="login-btn">Login with Battle.net</button>
 				</div>
-            `
+			`
 			document.getElementById('login-btn').addEventListener('click', () => {
 				window.location.href = '/auth/login'
 			})
 		})
 }
 
-// Load content when the page loads or hash changes
-window.addEventListener('hashchange', loadContent)
-
-// Ensure content loads if we land directly on a hash route like #/login
-if (window.location.hash && document.readyState === 'complete') {
+window.addEventListener('load', () => {
 	loadContent()
-} else {
-	window.addEventListener('DOMContentLoaded', () => {
-		if (window.location.hash) {
-			loadContent()
-		}
-	})
-}
+})
+
+window.addEventListener('hashchange', loadContent)
