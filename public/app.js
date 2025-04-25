@@ -1,7 +1,29 @@
+/**
+ * Frontend routing and session handling for the Blizz web app.
+ *
+ * This script handles:
+ * - Dynamic content loading based on URL hash
+ * - Parsing and storing the JWT from Battle.net OAuth login
+ * - Fetching and rendering character data for logged-in users
+ * - Rendering modals for creating groups and viewing profiles
+ *
+ * Works with the Firebase/Express backend to enable Battle.net-authenticated access.
+ */
+
+// Main function to determine what page to load based on URL hash
 function loadContent() {
 	const content = document.getElementById('content')
 	const hash = window.location.hash
 
+	// If user just logged in and redirected back with #token=xyz
+	if (hash.startsWith('#token=')) {
+		const token = hash.split('=')[1]
+		localStorage.setItem('jwt', token)
+		window.location.hash = '#login'
+		return
+	}
+
+	// Route to appropriate content page
 	switch (hash) {
 		case '#home':
 			loadHomePage(content)
@@ -18,6 +40,7 @@ function loadContent() {
 	}
 }
 
+// Load home page content, including create group button and search bar
 function loadHomePage(content) {
 	content.innerHTML = `
 	<div id="create-search-container">
@@ -38,28 +61,30 @@ function loadHomePage(content) {
 	const createGroupBtn = document.getElementById('create-group-btn')
 	const closeBtn = document.getElementById('close-group-create-btn')
 
+	// When "Create Group" button is clicked, open modal and populate characters
 	if (createGroupBtn && groupModal) {
 		createGroupBtn.addEventListener('click', async () => {
 			groupModal.style.display = 'flex'
 
 			try {
 				const res = await fetch('/api/profile', {
-					credentials: 'include',
+					headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
 				})
-				if (!res.ok) {
-					throw new Error('Not logged in')
-				}
+				if (!res.ok) throw new Error('Not logged in')
 				const data = await res.json()
 				const characters = data.wow_accounts[0].characters
+
 				const leaderSelect = document.getElementById('create-group-leader')
 				leaderSelect.innerHTML = characters
 					.map(
 						(char) =>
-							`<option value="${char.name}" style="color: ${char.classColor}">${char.name} - ${char.realm.name}</option>`
+							`<option value="${char.name}" style="color: ${char.classColor};">${char.name}</option>`
 					)
 					.join('')
 			} catch (err) {
 				console.error('Failed to fetch character data:', err)
+
+				// If not logged in, show message inside modal
 				groupModal.innerHTML = `
 				<div class="modal-content">
 				  <span class="close-btn" id="close-group-create-btn">&times;</span>
@@ -75,6 +100,7 @@ function loadHomePage(content) {
 		})
 	}
 
+	// Modal close button
 	if (closeBtn && groupModal) {
 		closeBtn.addEventListener('click', () => {
 			groupModal.style.display = 'none'
@@ -82,20 +108,23 @@ function loadHomePage(content) {
 	}
 }
 
+// Load about page content
 function loadAboutPage(content) {
 	content.innerHTML = `
 	<div class="content-wrapper">
 		<h1>About Us</h1>
-		<p>I hate boomkins (:</p>
+		<p>Learn more about our website and mission.</p>
 	</div>
 	`
 }
 
+// Load login/profile page content
 function loadLoginPage(content) {
 	content.innerHTML = ''
 
+	// Fetch profile data using stored JWT
 	fetch('/api/profile', {
-		credentials: 'include',
+		headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` },
 	})
 		.then((response) => {
 			if (!response.ok) throw new Error('Not logged in')
@@ -104,10 +133,11 @@ function loadLoginPage(content) {
 		.then((data) => {
 			const characters = data.wow_accounts[0].characters
 			if (characters.length === 0) {
-				content.innerHTML = `<p>No characters found.</p>`
+				content.innerHTML = `<p>No level 80 characters found.</p>`
 				return
 			}
 
+			// Render character cards
 			const characterCardsHTML = characters
 				.map((char) => {
 					const mythicScore = char.mythic_plus_score || 'N/A'
@@ -116,21 +146,21 @@ function loadLoginPage(content) {
 					const classColor = char.classColor || '#FFFFFF'
 
 					return `
-					<div class="character-card">
-					  <img src="${characterMedia}" class="character-avatar"/>
-					  <div class="character-info">
-						<h3>${char.name} - ${char.realm.name}</h3>
-						<p>Level: ${char.level}</p>
-						<p>
-						  Class:
-						  <span style="color: ${classColor};">
-							${char.class || 'unknown'}
-						  </span>
-						</p>
-						<p>Mythic+ Score: ${mythicScore}</p>
-					  </div>
-					</div>
-				  `
+				<div class="character-card">
+				  <img src="${characterMedia}" class="character-avatar"/>
+				  <div class="character-info">
+					<h3>${char.name}</h3>
+					<p>Level: ${char.level}</p>
+					<p>
+					  Class:
+					  <span style="color: ${classColor};">
+						${char.class || 'unknown'}
+					  </span>
+					</p>
+					<p>Mythic+ Score: ${mythicScore}</p>
+				  </div>
+				</div>
+			  `
 				})
 				.join('')
 
@@ -142,28 +172,31 @@ function loadLoginPage(content) {
 					</div>
 					<button class="drk-btn" id="logout-btn">Logout</button>
 				</div>
-			`
+            `
 
+			// Logout: clear JWT and reload to home
 			document.getElementById('logout-btn').addEventListener('click', () => {
-				window.location.href = '/auth/logout'
+				localStorage.removeItem('jwt')
+				window.location.href = '/'
 			})
 
 			document.getElementById('login-nav').innerHTML = 'Profile'
 		})
 		.catch(() => {
+			// Update nav link to say "Profile"
 			content.innerHTML = `
 				<div class="content-wrapper">
 					<h1>Login</h1>
 					<p>Log in to show your character information.</p>
-					<button class="drk-btn" id="login-btn">Login with Battle.net</button>
+					<a href="/auth/login">
+						<button class="drk-btn" id="login-btn">Login with Battle.net</button>
+					</a>
 				</div>
-			`
-			document.getElementById('login-btn').addEventListener('click', () => {
-				window.location.href = '/auth/login'
-			})
+            `
 		})
 }
 
+// Load the appropriate content on first page load and when hash changes
 window.addEventListener('load', () => {
 	loadContent()
 })

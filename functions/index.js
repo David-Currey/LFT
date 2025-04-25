@@ -1,242 +1,232 @@
-/*
-using:
----------
-express
-firebase cloud functions v2
-secure blizzard authorization 
-defineSecrect
-HttpOnly cookie
-*/
-
-// Google Cloud Function-based Express server for Blizzard OAuth
+/**
+ * Express app for handling Battle.net OAuth login and character profile fetch.
+ *
+ * This server-side code:
+ * - Redirects users to Battle.net OAuth login
+ * - Handles the callback to exchange the code for an access token
+ * - Issues a signed JWT containing user info and access token
+ * - Provides a protected `/api/profile` endpoint to fetch WoW character data
+ *
+ * Deployed as a Firebase Gen 2 HTTPS function.
+ */
+const functions = require('firebase-functions/v2')
 const express = require('express')
-const axios = require('axios')
-const crypto = require('crypto')
-const cookieParser = require('cookie-parser')
-const { onRequest } = require('firebase-functions/v2/https')
+const jwt = require('jsonwebtoken')
+const cors = require('cors')
 const { defineSecret } = require('firebase-functions/params')
-const admin = require('firebase-admin')
+const fetch = (...args) =>
+	import('node-fetch').then(({ default: fetch }) => fetch(...args))
 
-admin.initializeApp()
-const db = admin.firestore()
-
+// retrieve environment secrets from Firebase
 const BLIZZARD_CLIENT_ID = defineSecret('BLIZZARD_CLIENT_ID')
 const BLIZZARD_CLIENT_SECRET = defineSecret('BLIZZARD_CLIENT_SECRET')
+const JWT_SECRET = defineSecret('JWT_SECRET')
+
 const REDIRECT_URI = 'https://blizz-webapp-d0bf2.web.app/callback'
 
-const app = express()
-app.use(express.json())
-app.use(cookieParser())
+function createApp({ clientID, clientSecret, jwtSecret }) {
+	const app = express()
+	app.use(cors({ origin: true, credentials: true }))
+	app.use(express.json())
 
-// BLIZZARD LOGIN REDIRECT
-app.get('/auth/login', (req, res) => {
-	const state = crypto.randomBytes(16).toString('hex')
-	const authUrl = new URL('https://oauth.battle.net/authorize')
-	authUrl.searchParams.set('client_id', BLIZZARD_CLIENT_ID.value())
-	authUrl.searchParams.set('redirect_uri', REDIRECT_URI)
-	authUrl.searchParams.set('response_type', 'code')
-	authUrl.searchParams.set('scope', 'openid wow.profile')
-	authUrl.searchParams.set('state', state)
-	res.redirect(authUrl.toString())
-})
+	// --- AUTHENTICATION ROUTE ---
+	// Redirects the user to Blizzard's OAuth2 login page
+	// Includes the client ID, requested scopes, and redirect URI in the query params
+	app.get('/auth/login', (req, res) => {
+		const state = Math.random().toString(36).substring(2)
 
-// BLIZZARD CALLBACK (fetches userinfo)
-app.get('/callback', async (req, res) => {
-	const { code, state } = req.query
-	if (!code || !state) {
-		return res.status(400).send('Invalid state parameter')
-	}
-
-	try {
-		const tokenResponse = await axios.post(
-			'https://oauth.battle.net/token',
-			new URLSearchParams({
-				client_id: BLIZZARD_CLIENT_ID.value(),
-				client_secret: BLIZZARD_CLIENT_SECRET.value(),
-				code,
-				grant_type: 'authorization_code',
-				redirect_uri: REDIRECT_URI,
-			}),
-			{ headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-		)
-
-		const access_token = tokenResponse.data.access_token
-
-		const userInfo = await axios.get(
-			'https://oauth.battle.net/oauth/userinfo',
-			{
-				headers: { Authorization: `Bearer ${access_token}` },
-			}
-		)
-
-		console.log('Blizzard User:', userInfo.data)
-
-		res.cookie('blizz_token', access_token, {
-			httpOnly: true,
-			secure: true,
-			sameSite: 'None',
-			maxAge: 60 * 60 * 1000,
+		// Set up the query parameters for Blizzard's authorization endpoint
+		const params = new URLSearchParams({
+			client_id: clientID,
+			redirect_uri: REDIRECT_URI,
+			response_type: 'code',
+			scope: 'openid wow.profile',
+			state,
 		})
 
-		res.redirect('/#login')
-	} catch (error) {
-		console.error('AUTH ERROR:', error.response?.data || error.message)
-		res.status(500).send('Authentication failed')
-	}
-})
+		// Redirect the user to Blizzard's OAuth2 login screen
+		res.redirect(`https://oauth.battle.net/authorize?${params.toString()}`)
+	})
 
-// PROFILE FETCH ROUTE
-app.get('/api/profile', async (req, res) => {
-	const access_token = req.cookies.blizz_token
-	if (!access_token) return res.status(401).send('Unauthorized')
+	// --- CALLBACK ROUTE ---
+	// Handles the redirect from Battle.net OAuth and exchanges the code for an access token
+	// Then signs a JWT with user info and redirects the user back to the frontend with the token
+	app.get('/callback', async (req, res) => {
+		const { code } = req.query
+		if (!code) return res.status(400).send('Missing code')
 
-	try {
-		const profileResponse = await axios.get(
-			'https://us.api.blizzard.com/profile/user/wow',
-			{
-				headers: { Authorization: `Bearer ${access_token}` },
-				params: { namespace: 'profile-us', locale: 'en_US' },
-			}
-		)
-
-		const profileData = profileResponse.data
-		const wowAccounts = profileData.wow_accounts || []
-
-		if (!wowAccounts.length) {
-			return res.json(profileData)
-		}
-
-		const MAX_LEVEL = 80
-		const classColors = {
-			Warrior: '#C79C6E',
-			Paladin: '#F58CBA',
-			Hunter: '#ABD473',
-			Rogue: '#FFF569',
-			Priest: '#FFFFFF',
-			'Death Knight': '#C41F3B',
-			Shaman: '#0070DE',
-			Mage: '#69CCF0',
-			Warlock: '#9482C9',
-			Monk: '#00FF96',
-			Druid: '#FF7D0A',
-			'Demon Hunter': '#A330C9',
-		}
-
-		const enhancedWowAccounts = await Promise.all(
-			wowAccounts.map(async (account) => {
-				if (!account.characters || !account.characters.length) {
-					return account
-				}
-
-				account.characters = account.characters.filter(
-					(char) => char.level === MAX_LEVEL
-				)
-
-				const enhancedCharacters = await Promise.all(
-					account.characters.map(async (char) => {
-						const realmSlug = char.realm.slug
-						const characterName = encodeURIComponent(char.name.toLowerCase())
-
-						// Fetch Character Media
-						try {
-							const mediaRes = await axios.get(
-								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}/character-media`,
-								{
-									headers: { Authorization: `Bearer ${access_token}` },
-									params: { namespace: 'profile-us', locale: 'en_US' },
-								}
-							)
-							const assets = mediaRes.data.assets || []
-							const avatarAsset =
-								assets.find((a) => a.key === 'avatar') ||
-								assets.find((a) => a.key === 'render') ||
-								assets.find((a) => a.key === 'main') ||
-								assets[0]
-							char.media = { avatar_url: avatarAsset ? avatarAsset.value : '' }
-						} catch (e) {
-							char.media = { avatar_url: '' }
-						}
-
-						// Fetch Mythic+ Score
-						try {
-							const mythicRes = await axios.get(
-								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}/mythic-keystone-profile`,
-								{
-									headers: { Authorization: `Bearer ${access_token}` },
-									params: { namespace: 'profile-us', locale: 'en_US' },
-								}
-							)
-							char.mythic_plus_score =
-								mythicRes.data.current_mythic_rating?.rating || 'N/A'
-						} catch (e) {
-							char.mythic_plus_score = 'N/A'
-						}
-
-						// Fetch Summary Info
-						try {
-							const summaryRes = await axios.get(
-								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}`,
-								{
-									headers: { Authorization: `Bearer ${access_token}` },
-									params: { namespace: 'profile-us', locale: 'en_US' },
-								}
-							)
-							char.class = summaryRes.data.character_class?.name || 'Unknown'
-							char.itemLevel = summaryRes.data.equipped_item_level || 'N/A'
-						} catch (e) {
-							char.class = 'Unknown'
-							char.itemLevel = 'N/A'
-						}
-
-						char.classColor = classColors[char.class] || '#FFFFFF'
-						return char
-					})
-				)
-
-				account.characters = enhancedCharacters
-				return account
+		try {
+			// Exchange the authorization code for an access token
+			const tokenRes = await fetch('https://oauth.battle.net/token', {
+				method: 'POST',
+				headers: {
+					Authorization:
+						'Basic ' +
+						Buffer.from(`${clientID}:${clientSecret}`).toString('base64'),
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams({
+					grant_type: 'authorization_code',
+					code,
+					redirect_uri: REDIRECT_URI,
+				}),
 			})
-		)
 
-		profileData.wow_accounts = enhancedWowAccounts
-		res.json(profileData)
-	} catch (error) {
-		console.error(error.response?.data || error.message)
-		res.status(500).send('Failed to fetch profile')
-	}
-})
+			if (!tokenRes.ok) {
+				const errorText = await tokenRes.text()
+				throw new Error(`Token exchange failed: ${errorText}`)
+			}
 
-// LOGOUT
-app.get('/auth/logout', (req, res) => {
-	res.clearCookie('blizz_token')
-	res.redirect('/')
-})
+			const tokenData = await tokenRes.json()
+			const accessToken = tokenData.access_token
 
-// CREATE GROUP
-app.post('/api/groups', async (req, res) => {
-	const { title, description, time, leader, role, owner } = req.body
-	if (!title || !time || !leader || !owner) {
-		return res.status(400).json({ error: 'Missing required fields' })
-	}
+			// Use the access token to get the user's Battle.net profile info
+			const userInfoRes = await fetch('https://us.battle.net/oauth/userinfo', {
+				headers: { Authorization: `Bearer ${accessToken}` },
+			})
 
-	try {
-		const docRef = await db.collection('groups').add({
-			title,
-			description,
-			time,
-			leader,
-			role,
-			owner,
-			createdAt: new Date().toISOString(),
+			if (!userInfoRes.ok) throw new Error('Failed to fetch user info')
+			const userInfo = await userInfoRes.json()
+
+			// Create a signed JWT containing the user's battletag and access token
+			const jwtToken = jwt.sign(
+				{ battletag: userInfo.battletag, accessToken },
+				jwtSecret,
+				{ expiresIn: '24h' }
+			)
+
+			// Redirect back to frontend with the token in the URL hash
+			// The frontend will detect it and store it in localStorage
+			res.redirect(`/#token=${jwtToken}`)
+		} catch (err) {
+			console.error('Callback error:', err)
+			res.status(500).send('OAuth callback failed')
+		}
+	})
+
+	// --- PROFILE ROUTE ---
+	// Authenticated endpoint that verifies the JWT and uses the user's access token
+	// to fetch their World of Warcraft characters, along with class info, avatar, and mythic+ rating
+	app.get('/api/profile', async (req, res) => {
+		const authHeader = req.headers.authorization
+		if (!authHeader?.startsWith('Bearer '))
+			return res.status(401).send('Missing token')
+
+		try {
+			// Decode and verify the JWT from Authorization header
+			const token = authHeader.split(' ')[1]
+			const payload = jwt.verify(token, jwtSecret)
+			const { accessToken, battletag } = payload
+
+			// Fetch user's WoW account data from Blizzard's profile API
+			const profileRes = await fetch(
+				'https://us.api.blizzard.com/profile/user/wow?namespace=profile-us&locale=en_US',
+				{ headers: { Authorization: `Bearer ${accessToken}` } }
+			)
+
+			if (!profileRes.ok) {
+				const errorText = await profileRes.text()
+				throw new Error(`Blizzard profile fetch failed: ${errorText}`)
+			}
+
+			const profileData = await profileRes.json()
+			const wowAccounts = profileData.wow_accounts || []
+			const MAX_LEVEL = 80
+			const classColors = {
+				Warrior: '#C79C6E',
+				Paladin: '#F58CBA',
+				Hunter: '#ABD473',
+				Rogue: '#FFF569',
+				Priest: '#FFFFFF',
+				'Death Knight': '#C41F3B',
+				Shaman: '#0070DE',
+				Mage: '#69CCF0',
+				Warlock: '#9482C9',
+				Monk: '#00FF96',
+				Druid: '#FF7D0A',
+				'Demon Hunter': '#A330C9',
+			}
+
+			const enhancedWowAccounts = await Promise.all(
+				wowAccounts.map(async (account) => {
+					// Skip empty accounts
+					if (!account.characters?.length) return account
+
+					// Filter characters to only include max level (80)
+					account.characters = account.characters.filter(
+						(char) => char.level === MAX_LEVEL
+					)
+
+					const enhancedCharacters = await Promise.all(
+						// Fetch media (avatar), mythic+ score, and class summary for each character
+						account.characters.map(async (char) => {
+							const realmSlug = char.realm.slug
+							const characterName = encodeURIComponent(char.name.toLowerCase())
+
+							const media = await fetch(
+								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}/character-media?namespace=profile-us&locale=en_US`,
+								{ headers: { Authorization: `Bearer ${accessToken}` } }
+							).then((r) => (r.ok ? r.json() : null))
+
+							// Fetch character avatar/media
+							const avatar =
+								media?.assets?.find((a) => a.key === 'avatar') ||
+								media?.assets?.find((a) => a.key === 'render') ||
+								media?.assets?.[0]
+
+							char.media = { avatar_url: avatar?.value || '' }
+
+							// Fetch Mythic+ rating
+							const mythic = await fetch(
+								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}/mythic-keystone-profile?namespace=profile-us&locale=en_US`,
+								{ headers: { Authorization: `Bearer ${accessToken}` } }
+							).then((r) => (r.ok ? r.json() : null))
+
+							char.mythic_plus_score =
+								mythic?.current_mythic_rating?.rating || 'N/A'
+
+							// Fetch character summary info (class name, item level, etc.)
+							const summary = await fetch(
+								`https://us.api.blizzard.com/profile/wow/character/${realmSlug}/${characterName}?namespace=profile-us&locale=en_US`,
+								{ headers: { Authorization: `Bearer ${accessToken}` } }
+							).then((r) => (r.ok ? r.json() : null))
+
+							char.class = summary?.character_class?.name || 'Unknown'
+							char.itemLevel = summary?.equipped_item_level || 'N/A'
+							char.classColor = classColors[char.class] || '#FFFFFF'
+
+							return char
+						})
+					)
+
+					account.characters = enhancedCharacters
+					return account
+				})
+			)
+
+			// Return enhanced profile data to the frontend
+			res.json({ battletag, wow_accounts: enhancedWowAccounts })
+		} catch (err) {
+			console.error('Profile fetch error:', err)
+			res.status(401).send('Invalid or expired token')
+		}
+	})
+
+	return app
+}
+
+// Export the Express app as a Firebase HTTPS function (Gen 2)
+exports.app = functions.https.onRequest(
+	{
+		secrets: ['BLIZZARD_CLIENT_ID', 'BLIZZARD_CLIENT_SECRET', 'JWT_SECRET'],
+		region: 'us-central1',
+	},
+	(req, res) => {
+		const app = createApp({
+			clientID: BLIZZARD_CLIENT_ID.value(),
+			clientSecret: BLIZZARD_CLIENT_SECRET.value(),
+			jwtSecret: JWT_SECRET.value(),
 		})
-		res.status(201).json({ message: 'Group created', id: docRef.id })
-	} catch (e) {
-		console.error('Error saving group:', e)
-		res.status(500).json({ error: 'Failed to create group' })
+		return app(req, res)
 	}
-})
-
-exports.app = onRequest(
-	{ secrets: [BLIZZARD_CLIENT_ID, BLIZZARD_CLIENT_SECRET] },
-	app
 )
