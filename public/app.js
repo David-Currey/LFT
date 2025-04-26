@@ -10,15 +10,12 @@
  * Works with the Firebase/Express backend to enable Battle.net-authenticated access.
  */
 
-// Main function to determine what page to load based on URL hash
-
 import {
 	validateCreateGroupForm,
 	validateApplyGroupForm,
 } from './validation.js'
 
-// --- ROUTING AND PAGE LOADING FUNCTIONS ---
-
+// Main function to determine what page to load based on URL hash
 function loadContent() {
 	const content = document.getElementById('content')
 	const hash = window.location.hash
@@ -248,13 +245,9 @@ function handleApplyGroupSubmit(e) {
 	console.log('Applying to group:', formData)
 }
 
-// --- EVENT LISTENERS ---
+// --- HELPER FUNCTIONS ---
 
-// Load the appropriate content on first page load and when hash changes
-window.addEventListener('load', () => {
-	loadContent()
-
-	// Attach form event listeners AFTER the content and modals are loaded
+function attachFormListeners() {
 	const createGroupForm = document.getElementById('create-group-form')
 	const applyGroupForm = document.getElementById('apply-group-form')
 
@@ -265,6 +258,13 @@ window.addEventListener('load', () => {
 	if (applyGroupForm) {
 		applyGroupForm.addEventListener('submit', handleApplyGroupSubmit)
 	}
-})
+}
 
+// --- EVENT LISTENERS ---
+
+// Load the appropriate content on first page load and when hash changes
+window.addEventListener('load', () => {
+	loadContent()
+	attachFormListeners()
+})
 window.addEventListener('hashchange', loadContent)
