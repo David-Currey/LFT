@@ -47,7 +47,7 @@ Players can log in with their Battle.net account, view their level 80 characters
 
 ---
 
-- **Future Improvements**
+- **Future Improvements**:
   - Real-time group listings
   - Group chat integration
   - Scheduled reminders
