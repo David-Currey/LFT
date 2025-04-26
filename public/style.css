@@ -207,6 +207,20 @@ nav a:hover {
     align-items: center;
 }
 
+.modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+	font-size: 1.25rem;
+	font-weight: 600;
+	color: white;
+	margin: 0;
+}
+
 .modal-content {
     background-color: #252837; 
     padding: 20px;
@@ -216,19 +230,23 @@ nav a:hover {
     border-radius: 8px;
     position: relative; 
 }
-  
-.close-btn {
+
+.modal select {
+    width: 100%;
+    padding: 10px;
+    padding-right: 32px;
+    margin: 10px 0;
+    background-color: #1a1d25;
+    border: 1px solid #444;
+    border-radius: 4px;
     color: #ffffff;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
+    font-family: inherit;
+    font-size: 1rem;
 }
-  
-.close-btn:hover,
-.close-btn:focus {
-    color: #bbb;
-    text-decoration: none;
+
+.modal select:focus {
+    outline: none;
+    border-color: #4f8eec;
 }
   
 .modal input[type="text"] {
@@ -243,5 +261,19 @@ nav a:hover {
   
 .modal input[type="text"]::placeholder {
     color: #aaa;
+}
+
+.close-btn {
+    color: #ffffff;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+  
+.close-btn:hover,
+.close-btn:focus {
+    color: #bbb;
+    text-decoration: none;
 }
   

@@ -38,35 +38,58 @@
 
     <div class="modal" id="group-create-modal">
         <div class="modal-content">
-            <!-- add title to top of modal next to close button -->
-            <span class="close-btn" id="close-group-create-btn">&times;</span>
+            <!-- Modal Header: Title + Close Button -->
+            <div class="modal-header">
+                <h2>Create Group</h2>
+                <span class="close-btn" id="close-group-create-btn">&times;</span>
+            </div>
+    
+            <!-- Group Creation Form -->
             <input id="create-title" type="text" placeholder="Title">
             <input id="create-description" type="text" placeholder="Description">
-            <input id="create-date-time" type="text" placeholder="Select a time">
+            <input id="create-date-time" type="input" placeholder="Select a time">
+    
             <div class="character-role-select">
                 <label for="character-select">Character</label>
                 <select id="create-group-leader" name="character-select">
                     <!-- Dynamic content will be injected here -->
                 </select>
+    
                 <label for="role-select">Role</label>
-                <select id="create-leader-role" name="role-select"></select>   
+                <select id="create-leader-role" name="role-select">
+                    <option value="tank-role">Tank</option>
+                    <option value="dps-role">Damage</option>
+                    <option value="healer-role">Healer</option>
+                </select>   
             </div>
         </div>
-      </div>
+    </div>
 
     <div class="modal" id="group-apply-modal">
         <div class="modal-content">
-            <span class="close-btn" id="close-apply-group-btn">&times;</span>
+            <!-- Modal Header: Title + Close Button -->
+            <div class="modal-header">
+                <h2>Apply to Group</h2>
+                <span class="close-btn" id="close-apply-group-btn">&times;</span>
+            </div>
+    
+            <!-- Character/Role selection -->
             <div class="character-role-select">
-                <label for="character-select">character</label>
+                <label for="character-select">Character</label>
                 <select id="create-group-leader" name="character-select">
                     <!-- Dynamic content will be injected here -->
                 </select>
-                <label for="role-select">role</label>
+    
+                <label for="role-select">Role</label>
                 <select id="create-leader-role" name="role-select">
-                </select>   
+                    <option value="tank-role">Tank</option>
+                    <option value="dps-role">Damage</option>
+                    <option value="healer-role">Healer</option>
+                </select>
             </div>
-        <input id="group-character-note" type="text" placeholder="leave a note">
+    
+            <!-- Note input -->
+            <input id="group-character-note" type="text" placeholder="Leave a note">
         </div>
     </div>
 

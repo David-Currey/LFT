@@ -54,7 +54,7 @@ function loadHomePage(content) {
 	</div>
 	<div class="content-wrapper">
 		<h1>Welcome to the Home Page!</h1>
-		<p>This is the main page of the website.</p>
+		<p>Groups will be loaded here</p>
 	</div>
 	`
 	const groupModal = document.getElementById('group-create-modal')
@@ -113,7 +113,7 @@ function loadAboutPage(content) {
 	content.innerHTML = `
 	<div class="content-wrapper">
 		<h1>About Us</h1>
-		<p>Learn more about our website and mission.</p>
+		<p>I hate boomkins</p>
 	</div>
 	`
 }
