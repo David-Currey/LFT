@@ -203,6 +203,7 @@ function loadLoginPage(content) {
 
 // --- FORM SUBMISSION HANDLERS ---
 
+// TODO: add errors to modal and remove alerts
 function handleCreateGroupSubmit(e) {
 	e.preventDefault()
 

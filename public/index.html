@@ -3,28 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>blizz_webapp</title>
+    <title>blizz_webapp</title> 
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+    <!-- Navigation bar at the top -->
     <nav>
         <div id="nav-container">
+            <!-- Home Icon with link to Home page -->
             <div id="home-icon">
                 <a href="#home">
                     <svg id="wow-icon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 64 64">
                         <linearGradient id="1oeBABVuXhQHZ~TaWZW6xa_79114_gr1" x1="32" x2="32" y1="7" y2="57" gradientUnits="userSpaceOnUse" spreadMethod="reflect">
-                        <stop offset="0" stop-color="#1a6dff"></stop><stop offset="1" stop-color="#c822ff"></stop></linearGradient>
-                        <path fill="url(#1oeBABVuXhQHZ~TaWZW6xa_79114_gr1)" d="M53,45.539c2.526-3.905,4-8.552,4-13.539s-1.474-9.634-4-13.539V11h-7.461 C41.634,8.474,36.987,7,32,7s-9.634,1.474-13.539,
-                        4H11v7.461C8.474,22.366,7,27.013,7,32s1.474,9.634,4,13.539V53h7.461 c3.905,2.526,8.552,4,13.539,4s9.634-1.474,13.539-4H53V45.539z M51,13v2.779c-0.853-0.997-1.782-1.926-2.779-2
-                        .779H51z M13,13 h2.779c-0.997,0.853-1.926,1.782-2.779,2.779V13z M13,51v-2.779c0.853,0.997,1.782,1.926,2.779,2.779H13z M9,32 C9,19.318,19.317,9,32,9s23,10.318,23,23S44.683,55,32
-                        ,55S9,44.682,9,32z M48.221,51c0.997-0.853,1.926-1.782,2.779-2.779V51H48.221 z"></path><linearGradient id="1oeBABVuXhQHZ~TaWZW6xb_79114_gr2" x1="32" x2="32" y1="18" y2="49" 
-                        gradientUnits="userSpaceOnUse" spreadMethod="reflect"><stop offset="0" stop-color="#6dc7ff"></stop><stop offset="1" stop-color="#e6abff"></stop></linearGradient> <path fill=
-                        "url(#1oeBABVuXhQHZ~TaWZW6xb_79114_gr2)" d="M38.714,18L40,21l-3.127,16.534L31,23l-5.871,14.534L22,21l1.286-3H15l6,28l-1,3h9l-1-3 l3-7.091L34,46l-1,3h10l-2-3l6-25l2-3H38.714z">
-                        </path> 
+                            <stop offset="0" stop-color="#1a6dff"></stop>
+                            <stop offset="1" stop-color="#c822ff"></stop>
+                        </linearGradient>
+                        <path fill="url(#1oeBABVuXhQHZ~TaWZW6xa_79114_gr1)" d="..."></path>
+                        <linearGradient id="1oeBABVuXhQHZ~TaWZW6xb_79114_gr2" x1="32" x2="32" y1="18" y2="49" gradientUnits="userSpaceOnUse" spreadMethod="reflect">
+                            <stop offset="0" stop-color="#6dc7ff"></stop>
+                            <stop offset="1" stop-color="#e6abff"></stop>
+                        </linearGradient>
+                        <path fill="url(#1oeBABVuXhQHZ~TaWZW6xb_79114_gr2)" d="..."></path>
                     </svg>
+                    <!-- Website Name -->
                     <h1>Placeholder.io</h1>
                 </a>
             </div>
+
+            <!-- Navigation links -->
             <div id="links">
                 <a href="#about">About</a>
                 <a id="login-nav" href="#login">Login</a>
@@ -32,10 +39,12 @@
         </div>
     </nav>
 
+    <!-- Main Content Area -->
     <div id="content">
-        <!-- Dynamic content will be injected here -->
+        <!-- Content loaded dynamically via app.js -->
     </div>
 
+    <!-- Modal for Creating a Group -->
     <div class="modal" id="group-create-modal">
         <div class="modal-content">
             <!-- Modal Header: Title + Close Button -->
@@ -43,19 +52,20 @@
                 <h2>Create Group</h2>
                 <span class="close-btn" id="close-group-create-btn">&times;</span>
             </div>
-    
-            <!-- Group Creation Form -->
+            
+            <!-- Form for creating a group -->
             <form id="create-group-form" novalidate>
                 <input id="create-title" type="text" placeholder="Title">
                 <input id="create-description" type="text" placeholder="Description">
                 <input id="create-date-time" type="text" placeholder="MM-DD HH:mm format">
-    
+
+                <!-- Character and Role Selection -->
                 <div class="character-role-select">
                     <label for="character-select">Character</label>
                     <select id="create-group-leader" name="character-select">
-                        <!-- Dynamic content will be injected here -->
+                        <!-- Character options populated dynamically -->
                     </select>
-    
+
                     <label for="role-select">Role</label>
                     <select id="create-leader-role" name="role-select">
                         <option value="tank-role">Tank</option>
@@ -63,13 +73,14 @@
                         <option value="healer-role">Healer</option>
                     </select>   
                 </div>
-    
-                <!-- Add a real submit button inside the form -->
+
+                <!-- Submit button for creating the group -->
                 <button type="submit" class="drk-btn" id="submit-create-group">Create Group</button>
             </form>
         </div>
     </div>
 
+    <!-- Modal for Applying to a Group -->
     <div class="modal" id="group-apply-modal">
         <div class="modal-content">
             <!-- Modal Header: Title + Close Button -->
@@ -77,15 +88,15 @@
                 <h2>Apply to Group</h2>
                 <span class="close-btn" id="close-apply-group-btn">&times;</span>
             </div>
-    
-            <!-- Apply to Group Form -->
+            
+            <!-- Form for applying to a group -->
             <form id="apply-group-form" novalidate>
                 <div class="character-role-select">
                     <label for="character-select">Character</label>
                     <select id="create-group-leader" name="character-select">
-                        <!-- Dynamic content will be injected here -->
+                        <!-- Character options populated dynamically -->
                     </select>
-    
+
                     <label for="role-select">Role</label>
                     <select id="create-leader-role" name="role-select">
                         <option value="tank-role">Tank</option>
@@ -93,17 +104,17 @@
                         <option value="healer-role">Healer</option>
                     </select>
                 </div>
-    
-                <!-- Note input -->
+
+                <!-- Optional note input -->
                 <input id="group-character-note" type="text" placeholder="Leave a note (optional)" maxlength="200">
-    
-                <!-- Submit Button -->
+
+                <!-- Submit button for applying -->
                 <button type="submit" class="drk-btn" id="submit-apply-group">Apply</button>
             </form>
         </div>
     </div>
-    
 
+    <!-- Load JavaScript module that handles dynamic page functionality -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
