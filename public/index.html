@@ -45,23 +45,28 @@
             </div>
     
             <!-- Group Creation Form -->
-            <input id="create-title" type="text" placeholder="Title">
-            <input id="create-description" type="text" placeholder="Description">
-            <input id="create-date-time" type="input" placeholder="Select a time (MM-DD HH:mm format)">
+            <form id="create-group-form">
+                <input id="create-title" type="text" placeholder="Title" required>
+                <input id="create-description" type="text" placeholder="Description" required>
+                <input id="create-date-time" type="text" placeholder="Select a time (MM-DD HH:mm format)" required>
     
-            <div class="character-role-select">
-                <label for="character-select">Character</label>
-                <select id="create-group-leader" name="character-select">
-                    <!-- Dynamic content will be injected here -->
-                </select>
+                <div class="character-role-select">
+                    <label for="character-select">Character</label>
+                    <select id="create-group-leader" name="character-select" required>
+                        <!-- Dynamic content will be injected here -->
+                    </select>
     
-                <label for="role-select">Role</label>
-                <select id="create-leader-role" name="role-select">
-                    <option value="tank-role">Tank</option>
-                    <option value="dps-role">Damage</option>
-                    <option value="healer-role">Healer</option>
-                </select>   
-            </div>
+                    <label for="role-select">Role</label>
+                    <select id="create-leader-role" name="role-select" required>
+                        <option value="tank-role">Tank</option>
+                        <option value="dps-role">Damage</option>
+                        <option value="healer-role">Healer</option>
+                    </select>   
+                </div>
+    
+                <!-- Add a real submit button inside the form -->
+                <button type="submit" class="drk-btn" id="submit-create-group">Create Group</button>
+            </form>
         </div>
     </div>
 
@@ -73,25 +78,31 @@
                 <span class="close-btn" id="close-apply-group-btn">&times;</span>
             </div>
     
-            <!-- Character/Role selection -->
-            <div class="character-role-select">
-                <label for="character-select">Character</label>
-                <select id="create-group-leader" name="character-select">
-                    <!-- Dynamic content will be injected here -->
-                </select>
+            <!-- Apply to Group Form -->
+            <form id="apply-group-form">
+                <div class="character-role-select">
+                    <label for="character-select">Character</label>
+                    <select id="create-group-leader" name="character-select" required>
+                        <!-- Dynamic content will be injected here -->
+                    </select>
     
-                <label for="role-select">Role</label>
-                <select id="create-leader-role" name="role-select">
-                    <option value="tank-role">Tank</option>
-                    <option value="dps-role">Damage</option>
-                    <option value="healer-role">Healer</option>
-                </select>
-            </div>
+                    <label for="role-select">Role</label>
+                    <select id="create-leader-role" name="role-select" required>
+                        <option value="tank-role">Tank</option>
+                        <option value="dps-role">Damage</option>
+                        <option value="healer-role">Healer</option>
+                    </select>
+                </div>
     
-            <!-- Note input -->
-            <input id="group-character-note" type="text" placeholder="Leave a note">
+                <!-- Note input -->
+                <input id="group-character-note" type="text" placeholder="Leave a note (optional)" maxlength="200">
+    
+                <!-- Submit Button -->
+                <button type="submit" class="drk-btn" id="submit-apply-group">Apply</button>
+            </form>
         </div>
     </div>
+    
 
     <script src="app.js"></script>
 </body>

@@ -11,6 +11,14 @@
  */
 
 // Main function to determine what page to load based on URL hash
+
+import {
+	validateCreateGroupForm,
+	validateApplyGroupForm,
+} from './validation.js'
+
+// --- ROUTING AND PAGE LOADING FUNCTIONS ---
+
 function loadContent() {
 	const content = document.getElementById('content')
 	const hash = window.location.hash
@@ -196,9 +204,67 @@ function loadLoginPage(content) {
 		})
 }
 
+// --- FORM SUBMISSION HANDLERS ---
+
+function handleCreateGroupSubmit(e) {
+	e.preventDefault()
+
+	const formData = {
+		title: document.getElementById('create-title').value,
+		description: document.getElementById('create-description').value,
+		dateTime: document.getElementById('create-date-time').value,
+		character: document.getElementById('create-group-leader').value,
+		role: document.getElementById('create-leader-role').value,
+	}
+
+	const errors = validateCreateGroupForm(formData)
+
+	if (errors.length > 0) {
+		alert(errors.join('\n'))
+		return
+	}
+
+	// proceed to create group
+	console.log('Creating group:', formData)
+}
+
+function handleApplyGroupSubmit(e) {
+	e.preventDefault()
+
+	const formData = {
+		character: document.getElementById('create-group-leader').value,
+		role: document.getElementById('create-leader-role').value,
+		note: document.getElementById('group-character-note').value,
+	}
+
+	const errors = validateApplyGroupForm(formData)
+
+	if (errors.length > 0) {
+		alert(errors.join('\n'))
+		return
+	}
+
+	// proceed to apply to group
+	console.log('Applying to group:', formData)
+}
+
+// --- EVENT LISTENERS ---
+
 // Load the appropriate content on first page load and when hash changes
 window.addEventListener('load', () => {
 	loadContent()
+
+	// Attach form event listeners AFTER the content and modals are loaded
+	const createGroupForm = document.getElementById('create-group-form')
+	const applyGroupForm = document.getElementById('apply-group-form')
+
+	if (createGroupForm) {
+		createGroupForm.addEventListener('submit', handleCreateGroupSubmit)
+	}
+
+	if (applyGroupForm) {
+		applyGroupForm.addEventListener('submit', handleApplyGroupSubmit)
+	}
 })
 
 window.addEventListener('hashchange', loadContent)
