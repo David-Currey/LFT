@@ -45,4 +45,10 @@ Players can log in with their Battle.net account, view their level 80 characters
 - **APIs**:
   - Blizzard World of Warcraft Community API (Profile, Media, Mythic+ Keystone data)
 
+---
 
+- **Future Improvements**
+  - Real-time group listings
+  - Group chat integration
+  - Scheduled reminders
+  - Role-based filters when applying to groups
