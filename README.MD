@@ -1,4 +1,4 @@
-Welcome to **Blizz WebApp** — a lightweight World of Warcraft group creation and scheduling platform, built using HTML, CSS, avaScript, and Firebase.
+Welcome to **Blizz WebApp** — a lightweight World of Warcraft group creation and scheduling platform, built using HTML, CSS, JavaScript, and Firebase.
 
 Players can log in with their Battle.net account, view their level 80 characters, create groups, and apply to existing groups for Mythic+ dungeons and events.
 
